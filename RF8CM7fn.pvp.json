@@ -1,0 +1,69 @@
+{
+  "totalShots": 1,
+  "seconds": null,
+  "lives": null,
+  "pointsPerMiss": 2,
+  "pointsPerGoal": 10,
+  "mode": "FIXED_SHOTS",
+  "playerDir": "prod/football/data/assets/front/sprites/player/",
+  "text": {
+    "score": "Goal!",
+    "miss": "Missed",
+    "end": "Shot Complete"
+  },
+  "tints": {
+    "gloves": "#CCFF00",
+    "hair": "#111111",
+    "shoes": "#CCFF00",
+    "shorts": "#111111",
+    "skin": "#C68642",
+    "socks": "#111111",
+    "top": "#111111"
+  },
+  "images": [],
+  "sprites": [
+    {
+      "id": "spine",
+      "src": "prod/football/data/assets/front/sprites/goalkeeper.json"
+    },
+    {
+      "id": "hoarding_banner",
+      "src": "media/cache/football/bc8a1a3799/rc/P5UQeqqR/upload/media/1/4/0015/62/Football-Banner_4f96b5cab6b3b8d9e90271aed898ac.webp"
+    },
+    {
+      "id": "ball",
+      "src": "prod/football/data/assets/front/sprites/ball.webp"
+    },
+    {
+      "id": "ball_shadow",
+      "src": "prod/football/data/assets/front/sprites/ball_shadow.webp"
+    },
+    {
+      "id": "cursor",
+      "src": "prod/football/data/assets/front/sprites/cursor.webp"
+    },
+    {
+      "id": "start_ball",
+      "src": "prod/football/data/assets/front/sprites/start_ball.webp"
+    },
+    {
+      "id": "background",
+      "src": "prod/football/data/assets/front/sprites/pitch.webp"
+    },
+    {
+      "id": "goal",
+      "src": "prod/football/data/assets/front/sprites/goal.webp"
+    },
+    {
+      "id": "logo",
+      "src": "media/cache/football/bc8a1a3799/rc/QocM0gOM/upload/media/1/4/0015/62/Football-Keeper_e3bfa2437841ffaa953d3419995afb.webp"
+    }
+  ],
+  "popups": [],
+  "_help": {
+    "title": "How To Play",
+    "image": "prod/football/data/assets/front/sprites/howtoplay.webp",
+    "description": "Drag left mouse button or swipe the ball in the direction you want the shot to go. Good luck!",
+    "button": "fas:play"
+  }
+}

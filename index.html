@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark" />
+    <title>Penalty Shootout | Weplay</title>
+    <link rel="preload" href="media/hero.webp" as="image" type="image/webp" />
+    <link rel="preload" href="prod/football/bundles/index.js" as="script" />
+    <link rel="preload" href="prod/football/bundles/cannon.js" as="script" />
+    <style>
+      :root {
+        --ink: #f5f5f5;
+        --muted: #bdbdbd;
+        --accent: #e61a27;
+        --accent-deep: #b4121c;
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        color: var(--ink);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      #app {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        height: 100svh;
+        padding-top: var(--safe-top);
+        padding-bottom: var(--safe-bottom);
+        background: #000;
+      }
+      @media (min-width: 768px) {
+        #app {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 390px;
+          height: 844px;
+          max-height: min(844px, 96vh);
+          border-radius: 28px;
+          overflow: hidden;
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+      }
+      #screens {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .screen {
+        display: none;
+        flex: 1 1 auto;
+        min-height: 0;
+        flex-direction: column;
+      }
+      .screen.is-active { display: flex; }
+
+      #screen-hero {
+        position: relative;
+        justify-content: flex-end;
+        align-items: center;
+        overflow: hidden;
+        background: #000;
+        padding: 0 18px calc(28px + var(--safe-bottom));
+      }
+      #screen-hero .hero-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        pointer-events: none;
+        user-select: none;
+      }
+      #screen-hero .hero-scrim {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 42%;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.82) 0%,
+          rgba(0, 0, 0, 0.35) 55%,
+          transparent 100%
+        );
+        pointer-events: none;
+      }
+      #screen-hero .hero-actions {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: min(260px, 100%);
+      }
+      #screen-hero .cta {
+        appearance: none;
+        border: 0;
+        border-radius: 14px;
+        min-height: 52px;
+        width: 100%;
+        padding: 0 20px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        box-shadow: 0 2px 0 var(--accent-deep);
+      }
+      #screen-hero .cta:active { transform: scale(0.98); }
+
+      #screen-play {
+        background: #000;
+        position: relative;
+        align-items: stretch;
+        overflow: hidden;
+      }
+      #play-stage {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        overflow: hidden;
+        background: #000;
+      }
+      #play-stack {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        gap: 8px;
+      }
+      .play-top {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        flex: 0 0 auto;
+        padding-top: 8px;
+      }
+      .play-actions {
+        display: none;
+      }
+      .play-action-btn {
+        appearance: none;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+        line-height: 0;
+        flex: 0 0 auto;
+      }
+      .play-action-btn svg { width: 32px; height: 32px; display: block; }
+      .play-action-btn:active { transform: scale(0.94); opacity: 0.9; }
+      #play-chrome {
+        flex: 0 0 auto;
+        padding: 4px 14px 6px;
+        background: #000;
+      }
+      .solo-chrome {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 32px;
+      }
+      .solo-chrome .attempts {
+        margin-left: auto;
+        margin-right: 8px;
+      }
+      .score-chip {
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .score-chip span { color: var(--accent); }
+      .attempts { display: flex; gap: 6px; }
+      .attempts span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1.5px solid #eee;
+        background: transparent;
+      }
+      .attempts span.goal {
+        background: #43a047;
+        border-color: #43a047;
+      }
+      .attempts span.miss {
+        background: #e53935;
+        border-color: #e53935;
+      }
+
+      #game-wrap {
+        position: relative;
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+        background: #0c1812;
+        overflow: hidden;
+      }
+      #game-frame {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+        border: 0;
+        background: #0c1812;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      #game-frame.is-ready { opacity: 1; }
+
+      #play-footer {
+        flex: 0 0 auto;
+        min-height: 64px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px 12px;
+        background: #000;
+      }
+      .play-hint {
+        margin: 0;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+      }
+      .play-hint.is-hidden { display: none; }
+      .power-meter {
+        display: none;
+        width: min(280px, 100%);
+      }
+      .power-meter.is-active { display: block; }
+      .power-meter-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .power-meter-track {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+      }
+      .power-meter-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #4fc3f7 0%, #fff176 52%, var(--accent) 100%);
+      }
+      .power-meter-value {
+        margin-top: 4px;
+        text-align: center;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      #text-host {
+        position: absolute;
+        left: 50%;
+        top: 30%;
+        transform: translate(-50%, -50%);
+        z-index: 12;
+        pointer-events: none;
+        text-align: center;
+      }
+      .digita-text {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 800;
+        color: #fff;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+      }
+      .digita-text.is-goal { color: #d4ff2a; }
+      .digita-text.is-miss { color: #ff5a5a; }
+
+      #screen-done {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.88);
+        text-align: center;
+      }
+      #screen-done.is-active { display: flex; }
+      #screen-done h2 { margin: 0; font-size: 28px; font-weight: 800; }
+      #screen-done .final-score {
+        font-size: 22px;
+        font-weight: 700;
+      }
+      #screen-done .final-score #final-goals { color: var(--accent); }
+      #screen-done .blurb { margin: 0; color: var(--muted); font-size: 14px; }
+      .cta {
+        appearance: none;
+        border: 0;
+        border-radius: 14px;
+        min-height: 48px;
+        min-width: 180px;
+        padding: 0 20px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .cta:active { transform: scale(0.98); }
+
+      .play-modal {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 25;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 18px;
+        background: rgba(0, 0, 0, 0.62);
+      }
+      .play-modal.is-visible { display: flex; }
+      .play-modal-card {
+        width: min(100%, 300px);
+        background: #1a2420;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 18px;
+        padding: 20px 18px 18px;
+        position: relative;
+      }
+      .play-modal-card h3 {
+        margin: 0 36px 12px 0;
+        font-size: 15px;
+        font-weight: 800;
+      }
+      .play-modal-close {
+        appearance: none;
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        border: 0;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .play-modal-card p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.85);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="screens">
+        <section id="screen-hero" class="screen is-active" aria-label="Start">
+          <img
+            class="hero-bg"
+            src="media/hero.webp"
+            alt="Penalty Shootout Challenge"
+            width="941"
+            height="1672"
+            decoding="async"
+            fetchpriority="high"
+          />
+          <div class="hero-scrim" aria-hidden="true"></div>
+          <div class="hero-actions">
+            <button type="button" class="cta" id="btn-play">Play</button>
+          </div>
+        </section>
+
+        <section id="screen-play" class="screen" aria-label="Play">
+          <div id="play-stage">
+            <div id="play-stack">
+              <div class="play-top">
+                <div id="play-chrome">
+                  <div class="solo-chrome">
+                    <div class="score-chip">
+                      <span id="live-goals">0</span>/<span id="live-chances">5</span> goals
+                    </div>
+                    <div class="attempts" id="attempts" aria-label="Attempts">
+                      <span data-i="0"></span><span data-i="1"></span><span data-i="2"></span><span data-i="3"></span><span data-i="4"></span>
+                    </div>
+                    <button type="button" class="play-action-btn" id="btn-help" aria-label="How to play">
+                      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                        <circle cx="16" cy="16" r="14.5" stroke="#fff" stroke-width="1.5"/>
+                        <path d="M12.8 12.2a3.4 3.4 0 0 1 6.4 1.5c0 1.7-1.5 2.5-2.4 3.1-.8.5-1.2 1-1.2 1.9v.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/>
+                        <circle cx="16" cy="22.6" r="1.15" fill="#fff"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="game-wrap">
+                <iframe
+                  id="game-frame"
+                  title="Penalty shootout"
+                  allow="autoplay"
+                  style="background:#0c1812;color-scheme:dark"
+                ></iframe>
+                <div id="text-host" aria-live="polite"></div>
+                <div id="modal-help" class="play-modal" aria-hidden="true">
+                  <div class="play-modal-card" role="dialog" aria-labelledby="help-title">
+                    <button type="button" class="play-modal-close" id="btn-help-close" aria-label="Close">×</button>
+                    <h3 id="help-title">How to Play Penalty Shootout</h3>
+                    <p>Swipe or drag the ball toward the goal. Hold to charge shot power, then release to shoot. Aim for the corners and beat the keeper!</p>
+                  </div>
+                </div>
+                <section id="screen-done" aria-label="Results">
+                  <h2>Game Completed</h2>
+                  <div class="final-score">
+                    <span id="final-goals">0</span>/<span id="final-chances">5</span> goals
+                  </div>
+                  <p class="blurb">Ready for another round?</p>
+                  <button type="button" class="cta" id="btn-again">Play Again</button>
+                </section>
+              </div>
+              <div id="play-footer">
+                <p id="play-hint" class="play-hint">Swipe the ball to shoot</p>
+                <div id="power-meter" class="power-meter" aria-hidden="true">
+                  <div class="power-meter-labels">
+                    <span>Soft</span><span>Shot power</span><span>Hard</span>
+                  </div>
+                  <div class="power-meter-track">
+                    <div id="power-meter-fill" class="power-meter-fill"></div>
+                  </div>
+                  <div id="power-meter-value" class="power-meter-value">Hold to charge</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script data-cfasync="false" src="weplay-bridge.js"></script>
+    <script data-cfasync="false" src="iframeResizer.min.js"></script>
+    <script data-cfasync="false">
+      (function () {
+        var frame = document.getElementById("game-frame");
+        var textHost = document.getElementById("text-host");
+        var playHint = document.getElementById("play-hint");
+        var liveGoals = document.getElementById("live-goals");
+        var liveChances = document.getElementById("live-chances");
+        var finalGoals = document.getElementById("final-goals");
+        var finalChances = document.getElementById("final-chances");
+        var attemptEls = document.querySelectorAll("#attempts span");
+        var powerMeter = document.getElementById("power-meter");
+        var powerMeterFill = document.getElementById("power-meter-fill");
+        var powerMeterValue = document.getElementById("power-meter-value");
+        var done = document.getElementById("screen-done");
+        var modalHelp = document.getElementById("modal-help");
+        var screenHero = document.getElementById("screen-hero");
+        var screenPlay = document.getElementById("screen-play");
+        var currentScore = 0;
+        var MAX_SCORE = 50;
+        var gameStarted = false;
+        var powerHideTimer = null;
+
+        function showScreen(name) {
+          if (screenHero) screenHero.classList.toggle("is-active", name === "hero");
+          if (screenPlay) screenPlay.classList.toggle("is-active", name === "play");
+        }
+
+        function hidePlayHint() {
+          if (playHint) playHint.classList.add("is-hidden");
+        }
+        function showPlayHint() {
+          if (playHint) playHint.classList.remove("is-hidden");
+        }
+        function revealGameFrame() {
+          if (frame) frame.classList.add("is-ready");
+        }
+        function setScore(pts) {
+          currentScore = typeof pts === "number" && !isNaN(pts) ? Math.max(0, pts) : 0;
+        }
+        function countGoals() {
+          var n = 0;
+          attemptEls.forEach(function (el) {
+            if (el.classList.contains("goal")) n++;
+          });
+          return n;
+        }
+        function refreshGoalsHud() {
+          var goals = countGoals();
+          if (liveGoals) liveGoals.textContent = String(goals);
+          if (liveChances) liveChances.textContent = String(attemptEls.length);
+        }
+        function showPowerMeter() {
+          if (!powerMeter) return;
+          powerMeter.classList.add("is-active");
+          powerMeter.setAttribute("aria-hidden", "false");
+        }
+        function hidePowerMeter() {
+          if (!powerMeter) return;
+          powerMeter.classList.remove("is-active");
+          powerMeter.setAttribute("aria-hidden", "true");
+          if (powerMeterFill) powerMeterFill.style.width = "0%";
+          if (powerMeterValue) powerMeterValue.textContent = "Hold to charge";
+        }
+        function updatePowerMeter(data) {
+          if (!data) return;
+          showPowerMeter();
+          var p = typeof data.power === "number" ? Math.max(0, Math.min(100, data.power)) : 0;
+          if (powerMeterFill) powerMeterFill.style.width = p + "%";
+          if (powerMeterValue) {
+            powerMeterValue.textContent = data.active ? p + "%" : p > 0 ? "Release!" : "Hold to charge";
+          }
+          if (powerHideTimer) window.clearTimeout(powerHideTimer);
+          if (!data.active) {
+            powerHideTimer = window.setTimeout(hidePowerMeter, 900);
+          }
+        }
+
+        function onGameFrameLoad() {
+          window.setTimeout(function () {
+            if (!frame || !frame.parentNode) return;
+            window.iFrameResize(
+              {
+                checkOrigin: false,
+                heightCalculationMethod: "taggedElement",
+                log: false,
+                sizeHeight: false,
+                sizeWidth: false,
+                onMessage: function (msg) {
+                  var payload = msg && msg.message;
+                  if (!payload || typeof payload !== "object") return;
+                  revealGameFrame();
+                  if (payload.type === "userPlayStart") {
+                    hidePlayHint();
+                    if (!gameStarted && window.WeplayBridge) {
+                      gameStarted = true;
+                      window.WeplayBridge.gameStart();
+                    }
+                    return;
+                  }
+                  if (payload.type === "shotPower") {
+                    updatePowerMeter(payload.data || {});
+                    return;
+                  }
+                  handlePluginMessage(payload);
+                },
+              },
+              frame
+            );
+            window.setTimeout(revealGameFrame, 400);
+          }, 80);
+        }
+
+        function startGame() {
+          gameStarted = false;
+          setScore(0);
+          done.classList.remove("is-active");
+          attemptEls.forEach(function (el) {
+            el.className = "";
+          });
+          refreshGoalsHud();
+          if (finalGoals) finalGoals.textContent = "0";
+          if (finalChances) finalChances.textContent = String(attemptEls.length);
+          textHost.innerHTML = "";
+          showScreen("play");
+          showPlayHint();
+          showPowerMeter();
+          hidePowerMeter();
+          frame.classList.remove("is-ready");
+          frame.removeEventListener("load", onGameFrameLoad);
+          frame.addEventListener("load", onGameFrameLoad);
+          frame.src =
+            "game.html?configpath=" +
+            encodeURIComponent("RF8CM7fn.local.json") +
+            "&embed=1&t=" +
+            Date.now();
+        }
+
+        function ackText(msgId) {
+          if (!msgId || !frame.iFrameResizer) return;
+          frame.iFrameResizer.sendMessage({ id: msgId, type: "text" });
+        }
+
+        function showDigitaText(data, msgId) {
+          var label = (data && data.text) || "";
+          var el = document.createElement("p");
+          var tone = "";
+          var t = String(label).toLowerCase();
+          if (t.indexOf("goal") !== -1 || t.indexOf("score") !== -1) tone = "is-goal";
+          if (t.indexOf("miss") !== -1) tone = "is-miss";
+          el.className = "digita-text " + tone;
+          el.textContent = label;
+          textHost.innerHTML = "";
+          textHost.appendChild(el);
+          window.setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+            ackText(msgId);
+          }, 900);
+        }
+
+        function handlePluginMessage(msg) {
+          var type = msg.type;
+          var data = msg.data || {};
+
+          if (type === "text") {
+            hidePlayHint();
+            showDigitaText(data, msg.id);
+            return;
+          }
+          if (type === "databoxScore") {
+            var live = data.score;
+            if (typeof live === "string" && live.trim() !== "" && !isNaN(Number(live))) live = Number(live);
+            if (typeof live === "number" && !isNaN(live)) {
+              setScore(live);
+              if (live > 0) hidePlayHint();
+              if (window.WeplayBridge) window.WeplayBridge.scoreUpdate(live, MAX_SCORE);
+            }
+            return;
+          }
+          if (type === "databoxAttemptsIcon" && data.state) {
+            var states = data.state;
+            attemptEls.forEach(function (el, i) {
+              var s = states[i];
+              el.className =
+                s === "positive" ? "goal" : s === "negative" ? "miss" : "";
+            });
+            refreshGoalsHud();
+            return;
+          }
+          if (type === "dialog" && msg.id && frame.iFrameResizer) {
+            frame.iFrameResizer.sendMessage({
+              id: msg.id,
+              type: "dialog",
+              data: { result: true },
+            });
+            return;
+          }
+          if (type === "complete") {
+            var pts = data.details && data.details.score;
+            if (typeof pts !== "number") pts = currentScore;
+            setScore(pts);
+            var goals = countGoals();
+            if (finalGoals) finalGoals.textContent = String(goals);
+            if (finalChances) finalChances.textContent = String(attemptEls.length);
+            refreshGoalsHud();
+            hidePowerMeter();
+            done.classList.add("is-active");
+            if (window.WeplayBridge) {
+              window.WeplayBridge.gameComplete(pts, MAX_SCORE, data.details || {});
+            }
+          }
+        }
+
+        document.getElementById("btn-play").addEventListener("click", function () {
+          startGame();
+        });
+        document.getElementById("btn-again").addEventListener("click", function () {
+          if (window.WeplayBridge) window.WeplayBridge.playAgain();
+          startGame();
+        });
+        document.getElementById("btn-help").addEventListener("click", function () {
+          modalHelp.classList.add("is-visible");
+          modalHelp.setAttribute("aria-hidden", "false");
+        });
+        document.getElementById("btn-help-close").addEventListener("click", function () {
+          modalHelp.classList.remove("is-visible");
+          modalHelp.setAttribute("aria-hidden", "true");
+        });
+        modalHelp.addEventListener("click", function (e) {
+          if (e.target === modalHelp) {
+            modalHelp.classList.remove("is-visible");
+            modalHelp.setAttribute("aria-hidden", "true");
+          }
+        });
+
+        window.addEventListener("message", function (e) {
+          var data = e && e.data;
+          if (!data || typeof data !== "object") return;
+          if (data.type === "userPlayStart") hidePlayHint();
+          if (data.type === "shotPower") updatePowerMeter(data.data || {});
+        });
+
+        showScreen("hero");
+      })();
+    </script>
+  </body>
+</html>

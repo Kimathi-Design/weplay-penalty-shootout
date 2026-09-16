@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en" style="background:#000">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <!-- Prevent Cloudflare Rocket Loader from breaking Digita init order -->
+    <meta name="rocketloader" content="false" />
+    <title>Football — Penalty Shootout</title>
+    <style>
+      html,
+      body,
+      #system-container,
+      canvas {
+        background: #000 !important;
+      }
+    </style>
+    <link href="prod/football/bundles/index.css" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000 !important;
+        width: 100%;
+        height: 100%;
+        color-scheme: dark;
+      }
+      #system-container.system-container {
+        width: 300px !important;
+        max-width: 300px !important;
+        margin: 0 auto !important;
+        background: #000 !important;
+      }
+      canvas {
+        display: block;
+        width: 300px !important;
+        max-width: 300px !important;
+        height: auto !important;
+        margin: 0 auto;
+        background: #000 !important;
+      }
+      html.embed,
+      html.embed body {
+        width: 100%;
+        height: 100%;
+      }
+      html.embed #system-container.system-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background: #0c1812 !important;
+      }
+      html.embed canvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
+      }
+    </style>
+    <script data-cfasync="false">
+      if (/[?&]embed=1(?:&|$)/.test(location.search)) {
+        document.documentElement.classList.add("embed");
+      }
+      window.addEventListener("error", function (e) {
+        console.error("[local]", e.message, e.filename, e.lineno, e.error);
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        console.error("[local:rejection]", e.reason);
+      });
+      // Keep WebGL backbuffer so the canvas composites reliably
+      (function () {
+        var orig = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+          if (type && String(type).indexOf("webgl") !== -1) {
+            attrs = Object.assign({}, attrs || {}, { preserveDrawingBuffer: true });
+          }
+          return orig.call(this, type, attrs);
+        };
+      })();
+
+      /**
+       * Digita race fix:
+       * index.js sets window.iFrameResizer.onReady → y() before Integrate()
+       * creates options (p). Parent handshake can fire onReady while p is still
+       * undefined → "Cannot read properties of undefined (reading 'loadConfig')".
+       * Intercept assignment and defer onReady until after window load.
+       */
+      (function () {
+        var stored = null;
+        Object.defineProperty(window, "iFrameResizer", {
+          configurable: true,
+          enumerable: true,
+          get: function () {
+            return stored;
+          },
+          set: function (val) {
+            if (val && typeof val === "object" && typeof val.onReady === "function" && !val.__weplayPatched) {
+              var origReady = val.onReady;
+              val.onReady = function () {
+                var tries = 0;
+                function run() {
+                  tries += 1;
+                  try {
+                    origReady();
+                  } catch (err) {
+                    if (tries < 80) {
+                      window.setTimeout(run, 40);
+                    } else {
+                      console.error("[local] Digita onReady failed after retries", err);
+                    }
+                  }
+                }
+                if (document.readyState === "complete") {
+                  window.setTimeout(run, 0);
+                } else {
+                  window.addEventListener("load", function () {
+                    window.setTimeout(run, 0);
+                  });
+                }
+              };
+              val.__weplayPatched = true;
+            }
+            stored = val;
+          },
+        });
+      })();
+    </script>
+  </head>
+  <body style="background:#000;margin:0">
+    <div id="system-container" class="system-container" style="background:#000">
+      <canvas id="canvas" width="1200" height="1200" style="background:#000"></canvas>
+    </div>
+    <div data-iframe-height></div>
+    <script data-cfasync="false">
+      (function () {
+        function keepBlack() {
+          if (!document.body) return;
+          document.documentElement.style.backgroundColor = "#000";
+          document.body.style.backgroundColor = "#000";
+        }
+        keepBlack();
+        var mo = new MutationObserver(keepBlack);
+        document.addEventListener("DOMContentLoaded", function () {
+          keepBlack();
+          mo.observe(document.body, {
+            attributes: true,
+            attributeFilter: ["style"],
+          });
+        });
+        window.setInterval(keepBlack, 200);
+      })();
+    </script>
+    <!-- data-cfasync=false: do not defer/reorder these with Cloudflare Rocket Loader -->
+    <script data-cfasync="false" src="prod/football/bundles/index.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/Detector.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/smoothie.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/cannon.js"></script>
+    <script data-cfasync="false">
+      (function () {
+        var sent = false;
+        function notifyPlayStart() {
+          if (sent) return;
+          sent = true;
+          var payload = { type: "userPlayStart" };
+          try {
+            if (window.parentIFrame && typeof window.parentIFrame.sendMessage === "function") {
+              window.parentIFrame.sendMessage(payload);
+              return;
+            }
+          } catch (e) {}
+          try {
+            window.parent.postMessage(payload, "*");
+          } catch (e2) {}
+        }
+        ["pointerdown", "touchstart", "mousedown"].forEach(function (ev) {
+          document.addEventListener(ev, notifyPlayStart, { passive: true });
+        });
+      })();
+
+      // Shot power meter — hold duration maps to soft/hard (engine cap: 1000ms)
+      (function () {
+        var MAX_MS = 1000;
+        var holding = false;
+        var start = 0;
+        var raf = null;
+
+        function sendPower(power, active) {
+          var payload = { type: "shotPower", data: { power: power, active: active } };
+          try {
+            if (window.parentIFrame && typeof window.parentIFrame.sendMessage === "function") {
+              window.parentIFrame.sendMessage(payload);
+              return;
+            }
+          } catch (e) {}
+          try {
+            window.parent.postMessage(payload, "*");
+          } catch (e2) {}
+        }
+
+        function tick() {
+          if (!holding) return;
+          var elapsed = Math.min(Date.now() - start, MAX_MS);
+          sendPower(Math.round((elapsed / MAX_MS) * 100), true);
+          raf = window.requestAnimationFrame(tick);
+        }
+
+        function onDown() {
+          if (holding) return;
+          holding = true;
+          start = Date.now();
+          sendPower(0, true);
+          raf = window.requestAnimationFrame(tick);
+        }
+
+        function onUp() {
+          if (!holding) return;
+          holding = false;
+          if (raf) window.cancelAnimationFrame(raf);
+          raf = null;
+          var elapsed = Math.min(Date.now() - start, MAX_MS);
+          sendPower(Math.round((elapsed / MAX_MS) * 100), false);
+        }
+
+        ["pointerdown", "mousedown", "touchstart"].forEach(function (ev) {
+          document.addEventListener(ev, onDown, { passive: true });
+        });
+        ["pointerup", "mouseup", "touchend", "touchcancel", "pointercancel"].forEach(
+          function (ev) {
+            document.addEventListener(ev, onUp, { passive: true });
+          }
+        );
+      })();
+    </script>
+  </body>
+</html>

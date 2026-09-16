@@ -1,0 +1,170 @@
+goalkeeper.webp
+size:300,269
+filter:Linear,Linear
+pma:true
+scale:0.25
+arm left elbow
+bounds:280,92,16,17
+rotate:90
+arm left lower
+bounds:163,69,33,29
+arm left upper
+bounds:215,171,25,28
+rotate:90
+arm right elbow
+bounds:280,129,18,17
+arm right lower
+bounds:245,169,27,23
+rotate:90
+arm right upper
+bounds:198,69,29,22
+rotate:90
+elbow left
+bounds:280,110,18,17
+elbow right
+bounds:280,27,16,15
+offsets:0,0,17,15
+rotate:90
+glove frontal
+bounds:166,144,40,21
+glove left
+bounds:196,35,32,22
+rotate:90
+glove right
+bounds:201,100,29,26
+hair
+bounds:125,74,28,36
+rotate:90
+hair sideview
+bounds:134,161,30,22
+offsets:1,14,31,36
+hand ground left
+bounds:102,53,21,27
+hand ground right
+bounds:278,243,24,20
+rotate:90
+hand left sideview
+bounds:166,128,37,14
+hand right sideview
+bounds:161,5,33,27
+hand save left
+bounds:166,190,28,47
+rotate:90
+head
+bounds:101,15,28,36
+head sideview
+bounds:64,53,30,36
+offsets:1,0,31,36
+rotate:90
+knee cap left
+bounds:278,198,17,20
+rotate:90
+knee cap right
+bounds:262,3,16,17
+knee down view
+bounds:253,92,25,21
+knee left sideview
+bounds:122,2,18,11
+knee lower left
+bounds:262,22,16,19
+knee lower right
+bounds:253,144,15,23
+knee right sideview
+bounds:101,2,19,11
+knee upper left
+bounds:208,143,22,22
+knee upper right
+bounds:270,148,22,27
+rotate:90
+lower arm left sideview
+bounds:108,82,45,15
+rotate:90
+lower arm right sideview
+bounds:161,34,33,33
+lower leg left sideview
+bounds:259,202,21,17
+rotate:90
+lower leg right sideview
+bounds:248,69,22,21
+neck
+bounds:272,66,26,24
+neck sideview
+bounds:278,217,20,24
+pants
+bounds:2,2,74,49
+pants back left
+bounds:232,141,26,19
+rotate:90
+pants back left sideview
+bounds:222,67,24,31
+pants back right
+bounds:253,43,24,16
+rotate:90
+pants back right sideview
+bounds:270,172,24,28
+rotate:90
+pants down view
+bounds:64,85,42,42
+pants left sideview
+bounds:69,180,63,46
+pants right sideview
+bounds:224,225,52,42
+shadow
+bounds:2,228,162,39
+offsets:4,8,170,54
+shirt front
+bounds:2,140,65,86
+shoe down view
+bounds:134,185,30,41
+shoe left
+bounds:125,53,19,27
+rotate:90
+shoe left sideview
+bounds:125,104,38,29
+shoe right
+bounds:232,112,19,27
+shoe right sideview
+bounds:78,7,44,21
+rotate:90
+sleeve left copy
+bounds:131,15,28,36
+sleeve right copy
+bounds:130,135,24,34
+rotate:90
+sock down view
+bounds:253,115,25,27
+sock left
+bounds:166,167,21,44
+rotate:90
+sock left sideview
+bounds:69,152,59,26
+sock right
+bounds:69,129,21,46
+rotate:90
+sock right sideview
+bounds:166,220,56,47
+upper arm left sideview
+bounds:271,45,21,19
+offsets:11,0,32,39
+upper arm left sideview sleeve
+bounds:220,36,31,29
+offsets:0,10,32,39
+upper arm right sideview
+bounds:229,3,31,31
+upper arm right sideview sleeve
+bounds:196,2,31,31
+upper body sideview
+bounds:2,53,85,60
+rotate:90
+upper leg left sideview
+bounds:224,198,33,25
+upper leg right sideview
+bounds:165,100,34,26
+
+logo.png
+size:54,54
+filter:Linear,Linear
+pma:true
+scale:0.25
+Logo/logo slot
+bounds:2,2,50,50
