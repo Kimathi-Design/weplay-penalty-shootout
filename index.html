@@ -113,25 +113,34 @@
         flex-direction: column;
         align-items: center;
         gap: 10px;
-        width: min(260px, 100%);
+        width: min(240px, 78%);
       }
-      #screen-hero .cta {
-        appearance: none;
-        border: 0;
-        border-radius: 14px;
-        min-height: 52px;
-        width: 100%;
-        padding: 0 20px;
-        background: var(--accent);
-        color: #fff;
-        font-size: 15px;
-        font-weight: 800;
+      #screen-hero .hero-load-label {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        cursor: pointer;
-        box-shadow: 0 2px 0 var(--accent-deep);
+        color: rgba(255, 255, 255, 0.78);
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
       }
-      #screen-hero .cta:active { transform: scale(0.98); }
+      #screen-hero .hero-load-track {
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+      }
+      #screen-hero .hero-load-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #ff8a80, var(--accent));
+        transform-origin: left center;
+        will-change: width;
+      }
 
       #screen-play {
         background: #000;
@@ -411,8 +420,11 @@
             fetchpriority="high"
           />
           <div class="hero-scrim" aria-hidden="true"></div>
-          <div class="hero-actions">
-            <button type="button" class="cta" id="btn-play">Play</button>
+          <div class="hero-actions" aria-live="polite">
+            <p class="hero-load-label">Loading</p>
+            <div class="hero-load-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="hero-load-bar">
+              <div class="hero-load-fill" id="hero-load-fill"></div>
+            </div>
           </div>
         </section>
 
@@ -507,14 +519,57 @@
         var modalHelp = document.getElementById("modal-help");
         var screenHero = document.getElementById("screen-hero");
         var screenPlay = document.getElementById("screen-play");
+        var heroLoadFill = document.getElementById("hero-load-fill");
+        var heroLoadBar = document.getElementById("hero-load-bar");
         var currentScore = 0;
         var MAX_SCORE = 50;
         var gameStarted = false;
         var powerHideTimer = null;
+        var heroLoadTimer = null;
+        var heroLoadRaf = null;
+        var HERO_LOAD_MS = 2200;
 
         function showScreen(name) {
           if (screenHero) screenHero.classList.toggle("is-active", name === "hero");
           if (screenPlay) screenPlay.classList.toggle("is-active", name === "play");
+        }
+
+        function stopHeroLoad() {
+          if (heroLoadTimer != null) {
+            window.clearTimeout(heroLoadTimer);
+            heroLoadTimer = null;
+          }
+          if (heroLoadRaf != null) {
+            window.cancelAnimationFrame(heroLoadRaf);
+            heroLoadRaf = null;
+          }
+        }
+
+        function runHeroLoad() {
+          stopHeroLoad();
+          showScreen("hero");
+          if (heroLoadFill) heroLoadFill.style.width = "0%";
+          if (heroLoadBar) heroLoadBar.setAttribute("aria-valuenow", "0");
+
+          var started = performance.now();
+          function tick(now) {
+            var t = Math.min(1, (now - started) / HERO_LOAD_MS);
+            // Ease-out so it feels like a real load
+            var eased = 1 - Math.pow(1 - t, 2.4);
+            var pct = Math.round(eased * 100);
+            if (heroLoadFill) heroLoadFill.style.width = pct + "%";
+            if (heroLoadBar) heroLoadBar.setAttribute("aria-valuenow", String(pct));
+            if (t < 1) {
+              heroLoadRaf = window.requestAnimationFrame(tick);
+              return;
+            }
+            heroLoadRaf = null;
+            heroLoadTimer = window.setTimeout(function () {
+              heroLoadTimer = null;
+              startGame();
+            }, 120);
+          }
+          heroLoadRaf = window.requestAnimationFrame(tick);
         }
 
         function hidePlayHint() {
@@ -702,9 +757,6 @@
           }
         }
 
-        document.getElementById("btn-play").addEventListener("click", function () {
-          startGame();
-        });
         document.getElementById("btn-again").addEventListener("click", function () {
           if (window.WeplayBridge) window.WeplayBridge.playAgain();
           startGame();
@@ -734,7 +786,7 @@
             frame.src = "about:blank";
           }
           gameStarted = false;
-          showScreen("hero");
+          runHeroLoad();
         });
 
         window.addEventListener("message", function (e) {
@@ -744,7 +796,7 @@
           if (data.type === "shotPower") updatePowerMeter(data.data || {});
         });
 
-        showScreen("hero");
+        runHeroLoad();
       })();
     </script>
   </body>
