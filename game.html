@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="dark" />
     <!-- Prevent Cloudflare Rocket Loader from breaking Digita init order -->
     <meta name="rocketloader" content="false" />
+    <base href="/" />
     <title>Football — Penalty Shootout</title>
     <style>
       html,
@@ -15,7 +16,7 @@
         background: #000 !important;
       }
     </style>
-    <link href="prod/football/bundles/index.css" rel="stylesheet" />
+    <link href="/prod/football/bundles/index.css" rel="stylesheet" />
     <style>
       html,
       body {
@@ -157,10 +158,10 @@
       })();
     </script>
     <!-- data-cfasync=false: do not defer/reorder these with Cloudflare Rocket Loader -->
-    <script data-cfasync="false" src="prod/football/bundles/index.js"></script>
-    <script data-cfasync="false" src="prod/football/bundles/Detector.js"></script>
-    <script data-cfasync="false" src="prod/football/bundles/smoothie.js"></script>
-    <script data-cfasync="false" src="prod/football/bundles/cannon.js"></script>
+    <script data-cfasync="false" src="/prod/football/bundles/index.js"></script>
+    <script data-cfasync="false" src="/prod/football/bundles/Detector.js"></script>
+    <script data-cfasync="false" src="/prod/football/bundles/smoothie.js"></script>
+    <script data-cfasync="false" src="/prod/football/bundles/cannon.js"></script>
     <script data-cfasync="false">
       (function () {
         var sent = false;

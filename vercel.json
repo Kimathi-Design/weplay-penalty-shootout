@@ -1,5 +1,9 @@
 {
-  "cleanUrls": true,
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/game/prod/:path*", "destination": "/prod/:path*" },
+    { "source": "/game/media/:path*", "destination": "/media/:path*" }
+  ],
   "headers": [
     {
       "source": "/media/(.*)",
