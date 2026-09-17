@@ -61,6 +61,7 @@
         }
       }
       #screens {
+        position: relative;
         flex: 1 1 auto;
         min-height: 0;
         display: flex;
@@ -72,7 +73,20 @@
         min-height: 0;
         flex-direction: column;
       }
-      .screen.is-active { display: flex; }
+      .screen.is-active {
+        display: flex;
+        position: relative;
+        z-index: 2;
+      }
+      /* Keep play mounted under the hero so the iframe can load during the bar */
+      .screen.is-preload {
+        display: flex;
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
 
       #screen-hero {
         position: relative;
@@ -525,49 +539,79 @@
         var MAX_SCORE = 50;
         var gameStarted = false;
         var powerHideTimer = null;
-        var heroLoadTimer = null;
         var heroLoadRaf = null;
-        var HERO_LOAD_MS = 2200;
+        var heroBarDone = false;
+        var gameReady = false;
+        var loadSession = 0;
+        var HERO_BAR_MIN_MS = 900;
 
         function showScreen(name) {
-          if (screenHero) screenHero.classList.toggle("is-active", name === "hero");
-          if (screenPlay) screenPlay.classList.toggle("is-active", name === "play");
+          if (screenHero) {
+            screenHero.classList.toggle("is-active", name === "hero");
+            screenHero.classList.remove("is-preload");
+          }
+          if (screenPlay) {
+            screenPlay.classList.toggle("is-active", name === "play");
+            screenPlay.classList.toggle("is-preload", name === "hero");
+          }
+        }
+
+        function setHeroProgress(pct) {
+          pct = Math.max(0, Math.min(100, Math.round(pct)));
+          if (heroLoadFill) heroLoadFill.style.width = pct + "%";
+          if (heroLoadBar) heroLoadBar.setAttribute("aria-valuenow", String(pct));
         }
 
         function stopHeroLoad() {
-          if (heroLoadTimer != null) {
-            window.clearTimeout(heroLoadTimer);
-            heroLoadTimer = null;
-          }
           if (heroLoadRaf != null) {
             window.cancelAnimationFrame(heroLoadRaf);
             heroLoadRaf = null;
           }
         }
 
+        function finishHeroAndPlay() {
+          if (!heroBarDone || !gameReady) return;
+          stopHeroLoad();
+          setHeroProgress(100);
+          showScreen("play");
+          revealGameFrame();
+        }
+
+        function markGameReady() {
+          if (gameReady) return;
+          gameReady = true;
+          finishHeroAndPlay();
+        }
+
         function runHeroLoad() {
           stopHeroLoad();
+          loadSession += 1;
+          var session = loadSession;
+          heroBarDone = false;
+          gameReady = false;
+          setHeroProgress(0);
           showScreen("hero");
-          if (heroLoadFill) heroLoadFill.style.width = "0%";
-          if (heroLoadBar) heroLoadBar.setAttribute("aria-valuenow", "0");
+          beginGameLoad();
 
           var started = performance.now();
           function tick(now) {
-            var t = Math.min(1, (now - started) / HERO_LOAD_MS);
-            // Ease-out so it feels like a real load
-            var eased = 1 - Math.pow(1 - t, 2.4);
-            var pct = Math.round(eased * 100);
-            if (heroLoadFill) heroLoadFill.style.width = pct + "%";
-            if (heroLoadBar) heroLoadBar.setAttribute("aria-valuenow", String(pct));
+            if (session !== loadSession) return;
+            var t = Math.min(1, (now - started) / HERO_BAR_MIN_MS);
+            var eased = 1 - Math.pow(1 - t, 2.2);
             if (t < 1) {
+              setHeroProgress(Math.round(eased * 92));
               heroLoadRaf = window.requestAnimationFrame(tick);
               return;
             }
             heroLoadRaf = null;
-            heroLoadTimer = window.setTimeout(function () {
-              heroLoadTimer = null;
-              startGame();
-            }, 120);
+            heroBarDone = true;
+            if (gameReady) {
+              setHeroProgress(100);
+              finishHeroAndPlay();
+            } else {
+              setHeroProgress(92);
+              heroLoadRaf = window.requestAnimationFrame(tick);
+            }
           }
           heroLoadRaf = window.requestAnimationFrame(tick);
         }
@@ -623,41 +667,39 @@
         }
 
         function onGameFrameLoad() {
-          window.setTimeout(function () {
-            if (!frame || !frame.parentNode) return;
-            window.iFrameResize(
-              {
-                checkOrigin: false,
-                heightCalculationMethod: "taggedElement",
-                log: false,
-                sizeHeight: false,
-                sizeWidth: false,
-                onMessage: function (msg) {
-                  var payload = msg && msg.message;
-                  if (!payload || typeof payload !== "object") return;
-                  revealGameFrame();
-                  if (payload.type === "userPlayStart") {
-                    hidePlayHint();
-                    if (!gameStarted && window.WeplayBridge) {
-                      gameStarted = true;
-                      window.WeplayBridge.gameStart();
-                    }
-                    return;
+          if (!frame || !frame.parentNode) return;
+          window.iFrameResize(
+            {
+              checkOrigin: false,
+              heightCalculationMethod: "taggedElement",
+              log: false,
+              sizeHeight: false,
+              sizeWidth: false,
+              onMessage: function (msg) {
+                var payload = msg && msg.message;
+                if (!payload || typeof payload !== "object") return;
+                markGameReady();
+                if (payload.type === "userPlayStart") {
+                  hidePlayHint();
+                  if (!gameStarted && window.WeplayBridge) {
+                    gameStarted = true;
+                    window.WeplayBridge.gameStart();
                   }
-                  if (payload.type === "shotPower") {
-                    updatePowerMeter(payload.data || {});
-                    return;
-                  }
-                  handlePluginMessage(payload);
-                },
+                  return;
+                }
+                if (payload.type === "shotPower") {
+                  updatePowerMeter(payload.data || {});
+                  return;
+                }
+                handlePluginMessage(payload);
               },
-              frame
-            );
-            window.setTimeout(revealGameFrame, 400);
-          }, 80);
+            },
+            frame
+          );
+          window.setTimeout(markGameReady, 180);
         }
 
-        function startGame() {
+        function beginGameLoad() {
           gameStarted = false;
           setScore(0);
           done.classList.remove("is-active");
@@ -668,7 +710,6 @@
           if (finalGoals) finalGoals.textContent = "0";
           if (finalChances) finalChances.textContent = String(attemptEls.length);
           textHost.innerHTML = "";
-          showScreen("play");
           showPlayHint();
           showPowerMeter();
           hidePowerMeter();
@@ -680,6 +721,10 @@
             encodeURIComponent("RF8CM7fn.local.json") +
             "&embed=1&t=" +
             Date.now();
+        }
+
+        function startGame() {
+          runHeroLoad();
         }
 
         function ackText(msgId) {
