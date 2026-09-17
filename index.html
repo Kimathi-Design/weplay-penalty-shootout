@@ -64,32 +64,29 @@
         position: relative;
         flex: 1 1 auto;
         min-height: 0;
-        display: flex;
-        flex-direction: column;
       }
       .screen {
         display: none;
-        flex: 1 1 auto;
-        min-height: 0;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
         flex-direction: column;
+        min-height: 0;
       }
       .screen.is-active {
         display: flex;
-        position: relative;
         z-index: 2;
       }
       /* Keep play mounted under the hero so the iframe can load during the bar */
       .screen.is-preload {
         display: flex;
-        position: absolute;
-        inset: 0;
         opacity: 0;
         pointer-events: none;
         z-index: 1;
       }
 
       #screen-hero {
-        position: relative;
         justify-content: flex-end;
         align-items: center;
         overflow: hidden;
@@ -102,7 +99,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center top;
+        object-position: center center;
         pointer-events: none;
         user-select: none;
       }
