@@ -176,16 +176,22 @@
         width: 100%;
         height: 100%;
         min-height: 0;
-        gap: 8px;
+        gap: 0;
+      }
+      /* Black band for live WePlay usernames — does not include the score chrome */
+      .play-username-spacer {
+        flex: 0 0 110px;
+        background: #000;
+        pointer-events: none;
       }
       .play-top {
         display: flex;
         flex-direction: column;
         gap: 0;
         flex: 0 0 auto;
-        /* Leave room above for live WePlay usernames / overlays */
-        padding-top: 72px;
-        padding-bottom: 4px;
+        padding: 0;
+        /* Sit just above the gameplay canvas */
+        margin-bottom: 50px;
       }
       .play-actions {
         display: none;
@@ -448,6 +454,7 @@
         <section id="screen-play" class="screen" aria-label="Play">
           <div id="play-stage">
             <div id="play-stack">
+              <div class="play-username-spacer" aria-hidden="true"></div>
               <div class="play-top">
                 <div id="play-chrome">
                   <div class="solo-chrome">
