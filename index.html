@@ -646,7 +646,14 @@
           powerMeter.setAttribute("aria-hidden", "false");
         }
         function resetPowerMeter() {
-          if (powerMeterFill) powerMeterFill.style.width = "0%";
+          if (powerMeterFill) {
+            var prev = powerMeterFill.style.transition;
+            powerMeterFill.style.transition = "none";
+            powerMeterFill.style.width = "0%";
+            // Force reflow then restore transition for the next charge
+            void powerMeterFill.offsetWidth;
+            powerMeterFill.style.transition = prev || "";
+          }
           if (powerMeterValue) powerMeterValue.textContent = "Hold to charge";
         }
         function hidePowerMeter() {
@@ -662,8 +669,10 @@
             powerMeterValue.textContent = data.active ? p + "%" : p > 0 ? "Release!" : "Hold to charge";
           }
           if (powerHideTimer) window.clearTimeout(powerHideTimer);
+          powerHideTimer = null;
+          // Reset fill as soon as the shot is released — don't wait for scene swap
           if (!data.active) {
-            powerHideTimer = window.setTimeout(resetPowerMeter, 900);
+            resetPowerMeter();
           }
         }
 
@@ -744,10 +753,11 @@
           el.textContent = label;
           textHost.innerHTML = "";
           textHost.appendChild(el);
+          // Hold through Digita's post-shot scenario swap (~1s) so the canvas never flashes empty
           window.setTimeout(function () {
             if (el.parentNode) el.parentNode.removeChild(el);
             ackText(msgId);
-          }, 900);
+          }, 1400);
         }
 
         function handlePluginMessage(msg) {
