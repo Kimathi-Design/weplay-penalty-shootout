@@ -292,13 +292,7 @@
       .power-meter {
         display: block;
         width: min(280px, 100%);
-        visibility: hidden;
-        opacity: 0;
         pointer-events: none;
-      }
-      .power-meter.is-active {
-        visibility: visible;
-        opacity: 1;
       }
       .power-meter-labels {
         display: flex;
@@ -317,6 +311,7 @@
         height: 100%;
         width: 0%;
         background: linear-gradient(90deg, #4fc3f7 0%, #fff176 52%, var(--accent) 100%);
+        transition: width 0.08s linear;
       }
       .power-meter-value {
         margin-top: 4px;
@@ -504,7 +499,7 @@
               </div>
               <div id="play-footer">
                 <p id="play-hint" class="play-hint">Swipe the ball to shoot</p>
-                <div id="power-meter" class="power-meter" aria-hidden="true">
+                <div id="power-meter" class="power-meter" aria-hidden="false">
                   <div class="power-meter-labels">
                     <span>Soft</span><span>Shot power</span><span>Hard</span>
                   </div>
@@ -648,15 +643,15 @@
         }
         function showPowerMeter() {
           if (!powerMeter) return;
-          powerMeter.classList.add("is-active");
           powerMeter.setAttribute("aria-hidden", "false");
         }
-        function hidePowerMeter() {
-          if (!powerMeter) return;
-          powerMeter.classList.remove("is-active");
-          powerMeter.setAttribute("aria-hidden", "true");
+        function resetPowerMeter() {
           if (powerMeterFill) powerMeterFill.style.width = "0%";
           if (powerMeterValue) powerMeterValue.textContent = "Hold to charge";
+        }
+        function hidePowerMeter() {
+          // Keep chrome visible; only clear the animated fill
+          resetPowerMeter();
         }
         function updatePowerMeter(data) {
           if (!data) return;
@@ -668,7 +663,7 @@
           }
           if (powerHideTimer) window.clearTimeout(powerHideTimer);
           if (!data.active) {
-            powerHideTimer = window.setTimeout(hidePowerMeter, 900);
+            powerHideTimer = window.setTimeout(resetPowerMeter, 900);
           }
         }
 
