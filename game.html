@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="dark" />
     <!-- Prevent Cloudflare Rocket Loader from breaking Digita init order -->
     <meta name="rocketloader" content="false" />
-    <base href="/" />
+    
     <title>Football — Penalty Shootout</title>
     <style>
       html,
@@ -16,7 +16,7 @@
         background: #000 !important;
       }
     </style>
-    <link href="/prod/football/bundles/index.css" rel="stylesheet" />
+    <link href="prod/football/bundles/index.css" rel="stylesheet" />
     <style>
       html,
       body {
@@ -56,6 +56,13 @@
         align-items: center;
         justify-content: center;
         background: #000 !important;
+      }
+      html.embed,
+      html.embed body,
+      html.embed #system-container,
+      html.embed #system-container.system-container,
+      html.embed canvas {
+        background: transparent !important;
       }
       html.embed canvas {
         width: 100% !important;
@@ -140,10 +147,13 @@
     <div data-iframe-height></div>
     <script data-cfasync="false">
       (function () {
+        var bg = document.documentElement.classList.contains("embed") ? "transparent" : "#000";
         function keepBlack() {
           if (!document.body) return;
-          document.documentElement.style.backgroundColor = "#000";
-          document.body.style.backgroundColor = "#000";
+          document.documentElement.style.backgroundColor = bg;
+          document.body.style.backgroundColor = bg;
+          var sc = document.getElementById("system-container");
+          if (sc) sc.style.backgroundColor = bg;
         }
         keepBlack();
         var mo = new MutationObserver(keepBlack);
@@ -158,10 +168,10 @@
       })();
     </script>
     <!-- data-cfasync=false: do not defer/reorder these with Cloudflare Rocket Loader -->
-    <script data-cfasync="false" src="/prod/football/bundles/index.js?v=softswap1"></script>
-    <script data-cfasync="false" src="/prod/football/bundles/Detector.js"></script>
-    <script data-cfasync="false" src="/prod/football/bundles/smoothie.js"></script>
-    <script data-cfasync="false" src="/prod/football/bundles/cannon.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/index.js?v=banner2"></script>
+    <script data-cfasync="false" src="prod/football/bundles/Detector.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/smoothie.js"></script>
+    <script data-cfasync="false" src="prod/football/bundles/cannon.js"></script>
     <script data-cfasync="false">
       (function () {
         var sent = false;
