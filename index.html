@@ -10,6 +10,9 @@
     <title>Penalty Shootout | Weplay</title>
     <link rel="preload" href="media/hero.webp" as="image" type="image/webp" />
     <link rel="preload" href="media/loader-ball-v1.webp" as="image" type="image/webp" />
+    <link rel="prefetch" href="media/got-it-v2.webp" as="image" />
+    <link rel="prefetch" href="media/btn-continue-v1.webp" as="image" />
+    <link rel="prefetch" href="media/btn-exit-v1.webp" as="image" />
     <link rel="prefetch" href="prod/football/bundles/index.js?v=banner2" as="script" />
     <link rel="prefetch" href="prod/football/bundles/cannon.js" as="script" />
     <link rel="preload" href="media/fonts/lombardy-v1.woff2" as="font" type="font/woff2" crossorigin />
@@ -653,10 +656,10 @@
         left: 50%;
         bottom: 9%;
         width: 60%;
-        aspect-ratio: 535 / 117;
+        aspect-ratio: 537 / 119;
         padding: 0;
         border: 0;
-        background: url("media/got-it-v1.webp") center / 100% 100% no-repeat;
+        background: url("media/got-it-v2.webp") center / 100% 100% no-repeat;
         transform: translateX(-50%);
         cursor: pointer;
       }
@@ -742,35 +745,6 @@
                   style="background:transparent"
                 ></iframe>
                 <div id="text-host" aria-live="polite"></div>
-                <div id="modal-help" class="play-modal" aria-hidden="true">
-                  <div class="play-modal-card" role="dialog" aria-labelledby="help-title">
-                    <button type="button" class="play-modal-close" id="btn-help-close" aria-label="Close"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2L2 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-                    <h3 id="help-title" class="visually-hidden">How to Play Penalty Shootout</h3>
-                    <p class="visually-hidden">Swipe or drag the ball toward the goal. Hold to charge shot power, then release to shoot. Aim for the corners and beat the keeper!</p>
-                    <img class="play-modal-img" src="media/how-to-play-v2.webp" alt="" width="680" height="757" decoding="async" />
-                    <button type="button" class="play-modal-ok" id="btn-help-ok" aria-label="Got it"></button>
-                  </div>
-                </div>
-                <div id="modal-exit" class="play-modal" aria-hidden="true">
-                  <div class="play-modal-card" role="dialog" aria-labelledby="exit-title">
-                    <button type="button" class="play-modal-close" id="btn-exit-close" aria-label="Close"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2L2 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-                    <h3 id="exit-title" class="visually-hidden">Exit Game?</h3>
-                    <p class="visually-hidden">Your current progress will be lost.</p>
-                    <img class="play-modal-img" src="media/exit-game-v1.webp" alt="" width="680" height="492" decoding="async" />
-                    <div class="play-modal-actions">
-                      <button type="button" id="btn-exit-continue" aria-label="Continue"></button>
-                      <button type="button" id="btn-exit-confirm" aria-label="Exit"></button>
-                    </div>
-                  </div>
-                </div>
-                <section id="screen-done" aria-label="Results">
-                  <h2>Game Completed</h2>
-                  <div class="final-score">
-                    <span id="final-goals">0</span>/<span id="final-chances">5</span> goals
-                  </div>
-                  <p class="blurb">Ready for another round?</p>
-                  <button type="button" class="cta" id="btn-again">Play Again</button>
-                </section>
               </div>
               <div id="play-footer">
                 <p id="play-hint" class="play-hint">
@@ -790,6 +764,35 @@
                   </div>
                   <div id="power-meter-value" class="power-meter-value">Hold to charge</div>
                 </div>
+              </div>
+            </div>
+          </div>
+          <section id="screen-done" aria-label="Results">
+            <h2>Game Completed</h2>
+            <div class="final-score">
+              <span id="final-goals">0</span>/<span id="final-chances">5</span> goals
+            </div>
+            <p class="blurb">Ready for another round?</p>
+            <button type="button" class="cta" id="btn-again">Play Again</button>
+          </section>
+          <div id="modal-help" class="play-modal" aria-hidden="true">
+            <div class="play-modal-card" role="dialog" aria-labelledby="help-title">
+              <button type="button" class="play-modal-close" id="btn-help-close" aria-label="Close"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2L2 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+              <h3 id="help-title" class="visually-hidden">How to Play Penalty Shootout</h3>
+              <p class="visually-hidden">Swipe or drag the ball toward the goal. Hold to charge shot power, then release to shoot. Aim for the corners and beat the keeper!</p>
+              <img class="play-modal-img" src="media/how-to-play-v2.webp" alt="" width="680" height="757" decoding="async" />
+              <button type="button" class="play-modal-ok" id="btn-help-ok" aria-label="Got it"></button>
+            </div>
+          </div>
+          <div id="modal-exit" class="play-modal" aria-hidden="true">
+            <div class="play-modal-card" role="dialog" aria-labelledby="exit-title">
+              <button type="button" class="play-modal-close" id="btn-exit-close" aria-label="Close"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2L2 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+              <h3 id="exit-title" class="visually-hidden">Exit Game?</h3>
+              <p class="visually-hidden">Your current progress will be lost.</p>
+              <img class="play-modal-img" src="media/exit-game-v1.webp" alt="" width="680" height="492" decoding="async" />
+              <div class="play-modal-actions">
+                <button type="button" id="btn-exit-continue" aria-label="Continue"></button>
+                <button type="button" id="btn-exit-confirm" aria-label="Exit"></button>
               </div>
             </div>
           </div>
