@@ -824,6 +824,8 @@
         var currentScore = 0;
         var MAX_SCORE = 50;
         var gameStarted = false;
+        var gameExited = false;
+        var wakeLockSentinel = null;
         var powerHideTimer = null;
         var heroLoadRaf = null;
         var heroBarDone = false;
@@ -1042,7 +1044,9 @@
                   }
                   return;
                 }
+                if (gameExited) return;
                 if (payload.type === "shotPower") {
+                  if (modalExit && modalExit.classList.contains("is-visible")) return;
                   updatePowerMeter(payload.data || {});
                   return;
                 }
@@ -1108,6 +1112,7 @@
         }
 
         function handlePluginMessage(msg) {
+          if (gameExited) return;
           var type = msg.type;
           var data = msg.data || {};
 
@@ -1181,34 +1186,190 @@
           }
         });
         var modalExit = document.getElementById("modal-exit");
+
         function setModal(modal, open) {
           modal.classList.toggle("is-visible", open);
           modal.setAttribute("aria-hidden", open ? "false" : "true");
         }
-        // Fresh round on the play screen — no hero bar
-        function restartInPlace() {
+
+        function postToGame(type) {
+          if (!frame) return;
+          try {
+            if (frame.contentWindow) frame.contentWindow.postMessage({ type: type }, "*");
+          } catch (e) {}
+          try {
+            if (frame.iFrameResizer) frame.iFrameResizer.sendMessage({ type: type });
+          } catch (e2) {}
+        }
+
+        function pauseGameSession() {
+          if (gameExited) return;
+          postToGame("weplay-pause");
+          if (powerHideTimer) {
+            window.clearTimeout(powerHideTimer);
+            powerHideTimer = null;
+          }
+          resetPowerMeter();
+          if (window.WeplayBridge && typeof window.WeplayBridge.pause === "function") {
+            window.WeplayBridge.pause();
+          }
+        }
+
+        function resumeGameSession() {
+          if (gameExited) return;
+          postToGame("weplay-resume");
+          if (window.WeplayBridge && typeof window.WeplayBridge.resume === "function") {
+            window.WeplayBridge.resume();
+          }
+        }
+
+        function stopAllAudio(root) {
+          try {
+            (root || document).querySelectorAll("audio, video").forEach(function (el) {
+              try {
+                el.pause();
+                el.muted = true;
+                el.removeAttribute("src");
+                el.load();
+              } catch (e) {}
+            });
+          } catch (e2) {}
+        }
+
+        function clearAuthAndSession() {
+          try {
+            sessionStorage.clear();
+          } catch (e) {}
+          try {
+            var keys = [];
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (!k) continue;
+              var lk = k.toLowerCase();
+              if (
+                lk.indexOf("token") !== -1 ||
+                lk.indexOf("auth") !== -1 ||
+                lk.indexOf("session") !== -1 ||
+                lk.indexOf("weplay") !== -1 ||
+                lk.indexOf("jwt") !== -1 ||
+                lk.indexOf("login") !== -1
+              ) {
+                keys.push(k);
+              }
+            }
+            keys.forEach(function (k) {
+              try {
+                localStorage.removeItem(k);
+              } catch (e2) {}
+            });
+          } catch (e3) {}
+          try {
+            document.cookie.split(";").forEach(function (c) {
+              var name = c.split("=")[0].trim();
+              if (!name) return;
+              document.cookie =
+                name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            });
+          } catch (e4) {}
+        }
+
+        function releaseWakeLock() {
+          try {
+            if (wakeLockSentinel) {
+              wakeLockSentinel.release();
+              wakeLockSentinel = null;
+            }
+          } catch (e) {}
+          try {
+            if (navigator.wakeLock && navigator.wakeLock.request) {
+              /* no active handle to query; best-effort only */
+            }
+          } catch (e2) {}
+        }
+
+        function leavePage() {
+          try {
+            window.close();
+          } catch (e) {}
+          window.setTimeout(function () {
+            if (!document.hidden) {
+              if (window.history.length > 1) {
+                try {
+                  window.history.back();
+                } catch (e2) {}
+              }
+              window.setTimeout(function () {
+                if (!document.hidden) {
+                  try {
+                    window.location.replace("about:blank");
+                  } catch (e3) {
+                    try {
+                      window.location.href = "about:blank";
+                    } catch (e4) {}
+                  }
+                }
+              }, 120);
+            }
+          }, 80);
+        }
+
+        function destroyGameSession() {
+          if (gameExited) return;
+          gameExited = true;
           stopHeroLoad();
           loadSession += 1;
-          heroBarDone = true;
+          gameStarted = false;
           gameReady = false;
-          beginGameLoad();
+          if (powerHideTimer) {
+            window.clearTimeout(powerHideTimer);
+            powerHideTimer = null;
+          }
+          releaseWakeLock();
+          postToGame("weplay-destroy");
+          stopAllAudio(document);
+          try {
+            if (frame && frame.contentDocument) stopAllAudio(frame.contentDocument);
+          } catch (e) {}
+          if (frame) {
+            try {
+              frame.removeEventListener("load", onGameFrameLoad);
+            } catch (e2) {}
+            try {
+              frame.classList.remove("is-ready");
+              frame.src = "about:blank";
+            } catch (e3) {}
+          }
+          try {
+            textHost.innerHTML = "";
+          } catch (e4) {}
+          clearAuthAndSession();
+          if (window.WeplayBridge) {
+            if (typeof window.WeplayBridge.logout === "function") window.WeplayBridge.logout();
+            if (typeof window.WeplayBridge.exit === "function") window.WeplayBridge.exit();
+          }
+          leavePage();
         }
+
         document.getElementById("btn-close").addEventListener("click", function () {
           setModal(modalHelp, false);
           setModal(modalExit, true);
+          pauseGameSession();
         });
         ["btn-exit-close", "btn-exit-continue"].forEach(function (id) {
           document.getElementById(id).addEventListener("click", function () {
             setModal(modalExit, false);
+            resumeGameSession();
           });
         });
         modalExit.addEventListener("click", function (e) {
-          if (e.target === modalExit) setModal(modalExit, false);
+          if (e.target === modalExit) {
+            setModal(modalExit, false);
+            resumeGameSession();
+          }
         });
         document.getElementById("btn-exit-confirm").addEventListener("click", function () {
           setModal(modalExit, false);
-          if (window.WeplayBridge) window.WeplayBridge.playAgain();
-          restartInPlace();
+          destroyGameSession();
         });
 
         window.addEventListener("message", function (e) {

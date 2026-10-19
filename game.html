@@ -176,7 +176,7 @@
       (function () {
         var sent = false;
         function notifyPlayStart() {
-          if (sent) return;
+          if (sent || window.__weplayPaused) return;
           sent = true;
           var payload = { type: "userPlayStart" };
           try {
@@ -222,7 +222,7 @@
         }
 
         function onDown() {
-          if (holding) return;
+          if (window.__weplayPaused || holding) return;
           holding = true;
           start = Date.now();
           sendPower(0, true);
@@ -246,6 +246,56 @@
             document.addEventListener(ev, onUp, { passive: true });
           }
         );
+
+        window.addEventListener("message", function (e) {
+          var data = e && e.data;
+          if (!data || typeof data !== "object") return;
+          if (data.type === "weplay-pause") {
+            if (holding) onUp();
+            window.__weplayPaused = true;
+            document.documentElement.style.pointerEvents = "none";
+            try {
+              document.querySelectorAll("audio, video").forEach(function (el) {
+                el.pause();
+                el.muted = true;
+              });
+            } catch (err) {}
+            try {
+              if (window.PIXI && PIXI.Ticker && PIXI.Ticker.shared) PIXI.Ticker.shared.stop();
+            } catch (err2) {}
+          }
+          if (data.type === "weplay-resume") {
+            window.__weplayPaused = false;
+            document.documentElement.style.pointerEvents = "";
+            try {
+              document.querySelectorAll("audio, video").forEach(function (el) {
+                el.muted = false;
+              });
+            } catch (err3) {}
+            try {
+              if (window.PIXI && PIXI.Ticker && PIXI.Ticker.shared) PIXI.Ticker.shared.start();
+            } catch (err4) {}
+          }
+          if (data.type === "weplay-destroy") {
+            if (holding) onUp();
+            window.__weplayPaused = true;
+            if (raf) window.cancelAnimationFrame(raf);
+            raf = null;
+            try {
+              document.querySelectorAll("audio, video").forEach(function (el) {
+                try {
+                  el.pause();
+                  el.src = "";
+                  el.load();
+                } catch (err5) {}
+              });
+            } catch (err6) {}
+            try {
+              if (window.PIXI && PIXI.Ticker && PIXI.Ticker.shared) PIXI.Ticker.shared.stop();
+            } catch (err7) {}
+          }
+        });
+
       })();
     </script>
   </body>

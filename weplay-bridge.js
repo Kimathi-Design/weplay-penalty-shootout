@@ -18,6 +18,11 @@
       }
     } catch (e) {}
     try {
+      if (global.top && global.top !== global && global.top !== global.parent) {
+        global.top.postMessage(msg, "*");
+      }
+    } catch (eTop) {}
+    try {
       if (global.Weplay && typeof global.Weplay[event] === "function") {
         global.Weplay[event](msg.payload);
       }
@@ -25,6 +30,30 @@
     if (global.location.search.indexOf("debug=1") !== -1) {
       console.log("[weplay-bridge]", event, msg.payload);
     }
+  }
+
+  function callLogoutApi() {
+    try {
+      if (global.Weplay && typeof global.Weplay.logout === "function") {
+        global.Weplay.logout({ gameId: GAME_ID, ts: Date.now() });
+        return;
+      }
+    } catch (e) {}
+    try {
+      var url =
+        (global.Weplay && global.Weplay.logoutUrl) ||
+        (global.__WEPLAY_LOGOUT_URL__) ||
+        null;
+      if (url && global.fetch) {
+        global.fetch(String(url), {
+          method: "POST",
+          credentials: "include",
+          keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameId: GAME_ID, ts: Date.now() }),
+        }).catch(function () {});
+      }
+    } catch (e2) {}
   }
 
   global.WeplayBridge = {
@@ -51,6 +80,20 @@
     },
     playAgain: function () {
       notify("playAgain", { gameId: GAME_ID, ts: Date.now() });
+    },
+    pause: function () {
+      notify("pause", { gameId: GAME_ID, ts: Date.now() });
+    },
+    resume: function () {
+      notify("resume", { gameId: GAME_ID, ts: Date.now() });
+    },
+    exit: function () {
+      notify("exit", { gameId: GAME_ID, ts: Date.now() });
+      notify("close", { gameId: GAME_ID, ts: Date.now() });
+    },
+    logout: function () {
+      notify("logout", { gameId: GAME_ID, ts: Date.now() });
+      callLogoutApi();
     },
   };
 })(window);
